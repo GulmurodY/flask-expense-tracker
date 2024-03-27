@@ -32,7 +32,7 @@ def home():
             new_note = Note(user_id=current_user.id, amount=amount, type=type, comment=comment)
             db.session.add(new_note)
             db.session.commit()
-            flash('Note added!', category='success')
+            flash('Expense added!', category='success')
 
     return render_template("home.html", user=current_user)
 
