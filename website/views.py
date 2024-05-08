@@ -8,20 +8,19 @@ views = Blueprint('views', __name__)
 
 from flask import request
 
-
 @views.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
     if request.method == 'POST':
         amount = int(request.form.get('amount'))
-        income_checkbox = request.form.get('incomeCheckbox')  # Check if 'Income' checkbox is selected
-        expense_checkbox = request.form.get('expenseCheckbox')  # Check if 'Expense' checkbox is selected
+        income_checkbox = request.form.get('type') == 'income'  # Check if 'Income' checkbox is selected
+        expense_checkbox = request.form.get('type') == 'expense'  # Check if 'Expense' checkbox is selected
         comment = request.form.get('comment')
 
         if amount < 0:
             flash('Amount cannot be negative!', category='error')
-        # elif not (income_checkbox or expense_checkbox):
-        #     flash('Please select at least one type (Income or Expense)!', category='error')
+        elif not (income_checkbox or expense_checkbox):
+            flash('Please select at least one type (Income or Expense)!', category='error')
         else:
             # Determine the type based on the selected checkboxes
             if income_checkbox:
@@ -32,7 +31,7 @@ def home():
             new_note = Note(user_id=current_user.id, amount=amount, type=type, comment=comment)
             db.session.add(new_note)
             db.session.commit()
-            flash('Transaction added!', category='success')
+            flash('Note added!', category='success')
 
     return render_template("home.html", user=current_user)
 
