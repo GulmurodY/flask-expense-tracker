@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: website-local
+  annotations:
+    nginx.ingress.kubernetes.io/limit-rps: "2"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: website-local
+            port:
+              number: 5000
