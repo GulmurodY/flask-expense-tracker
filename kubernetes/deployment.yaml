@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expense-tracker-deployment
+  labels:
+    app: expense-tracker
+spec:
+  replicas: 2  # Specifies the number of instances you want running
+  selector:
+    matchLabels:
+      app: expense-tracker  # This should match the labels of the pods you want to manage
+  template:
+    metadata:
+      labels:
+        app: expense-tracker  # Labels applied to all pods spawned by this deployment
+    spec:
+      containers:
+      - name: expense-tracker
+        image: expense-tracker  # The image to use for the pods, built in Minikube
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000  # The port the container exposes
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: expense-tracker-service
+  labels:
+    app: expense-tracker
+spec:
+  type: NodePort  # Use LoadBalancer for external access if on a cloud provider, or NodePort if on a local setup
+  selector:
+    app: expense-tracker  # This should match the labels of the pods the service applies to
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000  # This is the port on which the container is running
