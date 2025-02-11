@@ -1,59 +1,59 @@
 # Expense Tracker
 
-Expense Tracker is a web application built with Flask that allows users to track their expenses and income.
+Expense Tracker is a web application built with Flask that allows users to easily track their expenses and income, helping them stay on top of their finances.
 
 ## Features
 
-- User authentication: Users can sign up, log in, and log out securely.
-- Adding notes: Users can add expenses and income with details like amount, type, and comments.
-- Deleting notes: Users can delete their own notes.
+- **User Authentication**: Secure sign-up, log-in, and log-out functionality.
+- **Expense & Income Tracking**: Add and view your income and expense records.
+- **Record Management**: Ability to delete any of your financial records.
 
 ## Installation
 
-1. Clone the repository:
+Follow these steps to get the application running locally:
 
-    ```
+1. **Clone the Repository**:
+
+    ```bash
     git clone https://github.com/GulmurodY/expense-tracker.git
     ```
 
-2. Navigate into the project directory:
+2. **Navigate into the Project Directory**:
 
-    ```
+    ```bash
     cd expense-tracker
     ```
 
-3. Install dependencies:
+3. **Install Dependencies**:
 
-    ```
+    First, create and activate a virtual environment, then run the following command to install all required dependencies:
+
+    ```bash
     pip install -r requirements.txt
     ```
 
-4. Set up the database:
+4. **Run the App**:
 
-    ```
-    flask db init
-    flask db migrate
-    flask db upgrade
-    ```
+    Start the application using:
 
-5. Run the application:
-
-    ```
-    flask run
+    ```bash
+    python main.py
     ```
 
-6. Open a web browser and go to http://localhost:8000 to access the application.
+5. **Access the Application**:
+
+    Open your web browser and visit [http://localhost:8000](http://localhost:8000) to access the Expense Tracker.
 
 ## Usage
 
-- Sign up for a new account or log in with an existing account.
-- Once logged in, you'll be taken to the home page where you can view your records and add new ones.
-- To add a new note, fill in the amount, select the type (income or expense), add a comment if desired, and click the "Add Note" button.
-- To delete a note, click the delete button next to the note you want to delete.
+- **Sign Up & Log In**: Create a new account or log in with your existing credentials.
+- **Home Page**: Once logged in, you will be redirected to the home page where you can see all your tracked records.
+- **Adding a Note**: To add a new note, enter the amount, select the type (income or expense), add a comment if desired, and click the **Add Note** button.
+- **Deleting a Note**: To delete a note, simply click the delete button next to the transaction you want to remove.
 
 ## Technologies Used
 
-- Flask: Python web framework for building the backend.
-- Flask-SQLAlchemy: Flask extension for working with SQLAlchemy, an ORM for database interactions.
-- Flask-Login: Flask extension for handling user authentication.
-- HTML/CSS/JavaScript: Frontend technologies for building the user interface and interactivity.
+- **Flask**: A lightweight Python web framework for backend development.
+- **Flask-SQLAlchemy**: Flask extension to work with SQLAlchemy for database interactions.
+- **Flask-Login**: Manages user sessions and authentication.
+- **HTML/CSS/JavaScript**: For the frontend, providing a clean and responsive user interface.
