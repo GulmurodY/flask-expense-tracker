@@ -7,7 +7,8 @@ Expense Tracker is a web application built with Flask that allows users to easil
 - **User Authentication**: Secure sign-up, log-in, and log-out functionality.
 - **Expense & Income Tracking**: Add and view your income and expense records.
 - **Record Management**: Ability to delete any of your financial records.
-
+## Demonstration
+![Demo](https://github.com/GulmurodY/flask-expense-tracker/blob/main/expense-tracker-demo.gif)
 ## Installation
 
 Follow these steps to get the application running locally:
