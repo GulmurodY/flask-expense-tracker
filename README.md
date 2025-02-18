@@ -30,6 +30,7 @@ Follow these steps to get the application running locally:
     First, create and activate a virtual environment, then run the following command to install all required dependencies:
 
     ```bash
+    pip install --upgrade pip
     pip install -r requirements.txt
     ```
 
