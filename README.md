@@ -11,7 +11,19 @@ Expense Tracker is a web application built with Flask that allows users to easil
 ![Demo](https://github.com/GulmurodY/flask-expense-tracker/blob/main/expense-tracker-demo.gif)
 ## Installation
 
-Follow these steps to get the application running locally:
+### Using Docker
+
+1. **Pull the image**
+```
+docker pull gulmurody/expense-tracker:latest
+```
+2. **Run the image**
+```
+docker run -p 8000:8000 gulmurody/expense-tracker 
+```
+
+3. This will pull the latest image from Docker Hub and start the application at http://localhost:8000.
+### Local Installation
 
 1. **Clone the Repository**:
 
