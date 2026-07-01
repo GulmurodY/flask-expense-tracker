@@ -12,12 +12,18 @@ from flask import request
 @login_required
 def home():
     if request.method == 'POST':
-        amount = int(request.form.get('amount'))
+        try:
+            amount = float(request.form.get('amount'))
+        except (TypeError, ValueError):
+            amount = None
+
         income_checkbox = request.form.get('type') == 'income'  # Check if 'Income' checkbox is selected
         expense_checkbox = request.form.get('type') == 'expense'  # Check if 'Expense' checkbox is selected
         comment = request.form.get('comment')
 
-        if amount < 0:
+        if amount is None:
+            flash('Please enter a valid number for the amount!', category='error')
+        elif amount < 0:
             flash('Amount cannot be negative!', category='error')
         elif not (income_checkbox or expense_checkbox):
             flash('Please select at least one type (Income or Expense)!', category='error')
@@ -37,7 +43,8 @@ def home():
 
 
 @views.route('/delete-note', methods=['POST'])
-def delete_note():  
+@login_required
+def delete_note():
     note = json.loads(request.data) # this function expects a JSON from the INDEX.js file 
     noteId = note['noteId']
     note = Note.query.get(noteId)
