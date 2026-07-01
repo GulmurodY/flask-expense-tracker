@@ -37,6 +37,10 @@ def logout():
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
+    email = ''
+    first_name = ''
+    error_field = None
+
     if request.method == 'POST':
         email = request.form.get('email')
         first_name = request.form.get('firstName')
@@ -46,14 +50,19 @@ def sign_up():
         user = User.query.filter_by(email=email).first()
         if user:
             flash('Email already exists.', category='error')
+            error_field = 'email'
         elif len(email) < 4:
             flash('Email must be greater than 3 characters.', category='error')
+            error_field = 'email'
         elif len(first_name) < 2:
             flash('First name must be greater than 1 character.', category='error')
+            error_field = 'firstName'
         elif password1 != password2:
             flash('Passwords don\'t match.', category='error')
+            error_field = 'password'
         elif len(password1) < 7:
             flash('Password must be at least 7 characters.', category='error')
+            error_field = 'password'
         else:
             new_user = User(email=email, first_name=first_name, password=generate_password_hash(
                 password1))
@@ -63,4 +72,6 @@ def sign_up():
             flash('Account created!', category='success')
             return redirect(url_for('views.home'))
 
-    return render_template("sign_up.html", user=current_user)
+    return render_template("sign_up.html", user=current_user,
+                           email=email, first_name=first_name,
+                           error_field=error_field)

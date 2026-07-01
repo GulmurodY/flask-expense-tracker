@@ -16,7 +16,7 @@
   <tbody>
     {% for note in user.notes %}
     <tr>
-      <td>{{ note.id }}</td>
+      <td>{{ loop.index }}</td>
       <td>{{ note.amount }}</td>
       <td>{{ note.type }}</td>
       <td>{{ note.comment }}</td>
