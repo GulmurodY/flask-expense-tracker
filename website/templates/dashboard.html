@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Dashboard</h1>
+
+{% if stats.transactions == 0 %}
+<div class="card-panel">
+  <div class="empty-state">No data yet — add some transactions on the
+    <a href="/">Home</a> page to see your analysis here.</div>
+</div>
+{% else %}
+
+<div class="metric-grid">
+  <div class="stat balance">
+    <div class="label">Balance</div>
+    <div class="value">{{ '%.2f' | format(stats.balance) }}</div>
+  </div>
+  <div class="stat">
+    <div class="label">Savings Rate</div>
+    <div class="value">{{ '%.0f' | format(stats.savings_rate) }}%</div>
+  </div>
+  <div class="stat">
+    <div class="label">Top Category</div>
+    <div class="value" style="font-size:1.2rem">{{ stats.top_category }}</div>
+  </div>
+  <div class="stat">
+    <div class="label">Avg Expense</div>
+    <div class="value" style="font-size:1.2rem">{{ '%.2f' | format(stats.avg_expense) }}</div>
+  </div>
+</div>
+
+<div class="chart-grid">
+  <div class="chart-card">
+    <h2>Expenses by category</h2>
+    <canvas id="categoryChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h2>Income vs Expense (total)</h2>
+    <canvas id="totalsChart"></canvas>
+  </div>
+  <div class="chart-card wide">
+    <h2>Monthly trend</h2>
+    <canvas id="trendChart"></canvas>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block javascript %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script type="text/javascript">
+  const data = {{ chart_data | tojson }};
+  const palette = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#06b6d4','#ef4444','#64748b','#a855f7'];
+  const income = '#10b981';
+  const expense = '#ef4444';
+
+  Chart.defaults.font.family = "Inter, sans-serif";
+  Chart.defaults.color = '#64748b';
+
+  const catEl = document.getElementById('categoryChart');
+  if (catEl && data.category_labels.length) {
+    new Chart(catEl, {
+      type: 'doughnut',
+      data: {
+        labels: data.category_labels,
+        datasets: [{ data: data.category_values, backgroundColor: palette, borderWidth: 0 }]
+      },
+      options: {
+        cutout: '62%',
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  const totalsEl = document.getElementById('totalsChart');
+  if (totalsEl) {
+    const inc = data.income_series.reduce((a, b) => a + b, 0);
+    const exp = data.expense_series.reduce((a, b) => a + b, 0);
+    new Chart(totalsEl, {
+      type: 'bar',
+      data: {
+        labels: ['Income', 'Expense'],
+        datasets: [{ data: [inc, exp], backgroundColor: [income, expense], borderRadius: 8 }]
+      },
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+  }
+
+  const trendEl = document.getElementById('trendChart');
+  if (trendEl && data.months.length) {
+    new Chart(trendEl, {
+      type: 'line',
+      data: {
+        labels: data.months,
+        datasets: [
+          { label: 'Income', data: data.income_series, borderColor: income,
+            backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 },
+          { label: 'Expense', data: data.expense_series, borderColor: expense,
+            backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.3 }
+        ]
+      },
+      options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+    });
+  }
+</script>
+{% endblock %}

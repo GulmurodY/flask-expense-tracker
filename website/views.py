@@ -1,8 +1,19 @@
 from flask import Blueprint, render_template, request, flash, jsonify
 from flask_login import login_required, current_user
-from .models import Note
+from sqlalchemy import func
+from collections import defaultdict
+from datetime import datetime, time
+from .models import Note, CATEGORIES
 from . import db
 import json, uuid
+
+
+def _parse_date(value):
+    """Parse a 'YYYY-MM-DD' string from a date input; return None if invalid."""
+    try:
+        return datetime.strptime(value, '%Y-%m-%d').date()
+    except (TypeError, ValueError):
+        return None
 
 views = Blueprint('views', __name__)
 
@@ -20,6 +31,9 @@ def home():
         income_checkbox = request.form.get('type') == 'income'  # Check if 'Income' checkbox is selected
         expense_checkbox = request.form.get('type') == 'expense'  # Check if 'Expense' checkbox is selected
         comment = request.form.get('comment')
+        category = request.form.get('category')
+        if category not in CATEGORIES:
+            category = 'Other'
 
         if amount is None:
             flash('Please enter a valid number for the amount!', category='error')
@@ -34,12 +48,111 @@ def home():
             else:
                 type = 'expense'
 
-            new_note = Note(user_id=current_user.id, amount=amount, type=type, comment=comment)
+            new_note = Note(user_id=current_user.id, amount=amount, type=type,
+                            comment=comment, category=category)
             db.session.add(new_note)
             db.session.commit()
             flash('Note added!', category='success')
 
-    return render_template("home.html", user=current_user)
+    # Optional date-range filter from the query string.
+    start = _parse_date(request.args.get('start'))
+    end = _parse_date(request.args.get('end'))
+
+    query = Note.query.filter_by(user_id=current_user.id)
+    if start:
+        query = query.filter(Note.date >= datetime.combine(start, time.min))
+    if end:
+        query = query.filter(Note.date <= datetime.combine(end, time.max))
+    notes = query.order_by(Note.id).all()
+
+    # Summary + spending-by-category, computed over the filtered notes.
+    income_total = sum(n.amount for n in notes if n.type == 'income')
+    expense_total = sum(n.amount for n in notes if n.type == 'expense')
+
+    by_category = defaultdict(lambda: {'total': 0.0, 'count': 0})
+    for n in notes:
+        if n.type == 'expense':
+            key = n.category or 'Other'
+            by_category[key]['total'] += n.amount
+            by_category[key]['count'] += 1
+
+    category_stats = sorted(({
+        'category': cat,
+        'total': v['total'],
+        'count': v['count'],
+        'percent': (v['total'] / expense_total * 100) if expense_total else 0,
+    } for cat, v in by_category.items()), key=lambda s: s['total'], reverse=True)
+
+    return render_template("home.html", user=current_user,
+                           notes=notes,
+                           categories=CATEGORIES,
+                           category_stats=category_stats,
+                           income_total=income_total,
+                           expense_total=expense_total,
+                           start=request.args.get('start', ''),
+                           end=request.args.get('end', ''))
+
+
+@views.route('/dashboard')
+@login_required
+def dashboard():
+    notes = Note.query.filter_by(user_id=current_user.id).all()
+
+    # Expenses grouped by category (for the pie/doughnut chart).
+    by_category = defaultdict(float)
+    # Income vs expense grouped by month (for line/bar charts).
+    monthly_income = defaultdict(float)
+    monthly_expense = defaultdict(float)
+    income_total = 0.0
+    expense_total = 0.0
+
+    for n in notes:
+        month = n.date.strftime('%Y-%m') if n.date else 'Unknown'
+        if n.type == 'income':
+            monthly_income[month] += n.amount
+            income_total += n.amount
+        else:
+            by_category[n.category or 'Other'] += n.amount
+            monthly_expense[month] += n.amount
+            expense_total += n.amount
+
+    # Category data sorted by spend, highest first.
+    cat_sorted = sorted(by_category.items(), key=lambda kv: kv[1], reverse=True)
+    category_labels = [c for c, _ in cat_sorted]
+    category_values = [round(v, 2) for _, v in cat_sorted]
+
+    # Aligned monthly series across all months that appear.
+    months = sorted(set(list(monthly_income) + list(monthly_expense)))
+    income_series = [round(monthly_income[m], 2) for m in months]
+    expense_series = [round(monthly_expense[m], 2) for m in months]
+
+    # Reflection metrics.
+    balance = income_total - expense_total
+    savings_rate = (balance / income_total * 100) if income_total else 0
+    top_category = category_labels[0] if category_labels else '—'
+    expense_count = sum(1 for n in notes if n.type == 'expense')
+    avg_expense = (expense_total / expense_count) if expense_count else 0
+
+    chart_data = {
+        'category_labels': category_labels,
+        'category_values': category_values,
+        'months': months,
+        'income_series': income_series,
+        'expense_series': expense_series,
+    }
+
+    stats = {
+        'income_total': income_total,
+        'expense_total': expense_total,
+        'balance': balance,
+        'savings_rate': savings_rate,
+        'top_category': top_category,
+        'avg_expense': avg_expense,
+        'transactions': len(notes),
+    }
+
+    return render_template("dashboard.html", user=current_user,
+                           chart_data=chart_data, stats=stats)
 
 
 @views.route('/delete-note', methods=['POST'])

@@ -1,58 +1,127 @@
 {% extends "base.html" %}
 {% block title %}Home{% endblock %}
 {% block content %}
-<h1 align="center">Transactions</h1>
-<table class="table">
-  <thead>
-    <tr>
-      <th>Expense ID</th>
-      <th>Amount</th>
-      <th>Type</th>
-      <th>Comment</th>
-      <th>Date</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for note in user.notes %}
-    <tr>
-      <td>{{ loop.index }}</td>
-      <td>{{ note.amount }}</td>
-      <td>{{ note.type }}</td>
-      <td>{{ note.comment }}</td>
-      <td>{{ note.date }}</td>
-      <td>
-        <button type="button" class="btn btn-danger" onClick="deleteNote({{ note.id }})">
-          Delete
-        </button>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
 
-<form method="POST">
-  <div class="form-group">
-    <label for="amount">Amount</label>
-    <textarea name="amount" id="amount" class="form-control"></textarea>
+<form method="GET" class="filter-bar">
+  <div class="filter-field">
+    <label for="start">From</label>
+    <input type="date" id="start" name="start" class="form-control" value="{{ start }}" />
   </div>
-  <div class="form-group">
-    <label>Type</label><br>
-    <div class="form-check form-check-inline">
-      <input class="form-check-input" type="checkbox" name="type" id="incomeCheckbox" value="income">
-      <label class="form-check-label" for="incomeCheckbox">Income</label>
-    </div>
-    <div class="form-check form-check-inline">
-      <input class="form-check-input" type="checkbox" name="type" id="expenseCheckbox" value="expense">
-      <label class="form-check-label" for="expenseCheckbox">Expense</label>
-    </div>
+  <div class="filter-field">
+    <label for="end">To</label>
+    <input type="date" id="end" name="end" class="form-control" value="{{ end }}" />
   </div>
-  <div class="form-group">
-    <label for="comment">Comment</label>
-    <textarea name="comment" id="comment" class="form-control"></textarea>
-  </div>
-  <button type="submit" class="btn btn-primary">Add Transaction</button>
+  <button type="submit" class="btn btn-primary">Filter</button>
+  {% if start or end %}
+  <a href="/" class="btn btn-clear">Clear</a>
+  {% endif %}
 </form>
+
+<div class="summary-grid">
+  <div class="stat income">
+    <div class="label">Income</div>
+    <div class="value">+{{ '%.2f' | format(income_total) }}</div>
+  </div>
+  <div class="stat expense">
+    <div class="label">Expense</div>
+    <div class="value">-{{ '%.2f' | format(expense_total) }}</div>
+  </div>
+  <div class="stat balance">
+    <div class="label">Balance</div>
+    <div class="value">{{ '%.2f' | format(income_total - expense_total) }}</div>
+  </div>
+</div>
+
+<div class="card-panel">
+  <h1 class="page-title">Transactions</h1>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Amount</th>
+        <th>Type</th>
+        <th>Category</th>
+        <th>Comment</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for note in notes %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td class="amount-{{ note.type }}">
+          {{ '+' if note.type == 'income' else '-' }}{{ '%.2f' | format(note.amount) }}
+        </td>
+        <td><span class="badge-type {{ note.type }}">{{ note.type }}</span></td>
+        <td>{{ note.category or 'Other' }}</td>
+        <td>{{ note.comment }}</td>
+        <td>{{ note.date.strftime('%b %d, %Y') if note.date else '' }}</td>
+        <td>
+          <button type="button" class="btn btn-danger" onClick="deleteNote({{ note.id }})">
+            Delete
+          </button>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7" class="empty-state">
+          {% if start or end %}No transactions in this date range.{% else %}No transactions yet — add your first one below.{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if category_stats %}
+<div class="card-panel">
+  <h1 class="page-title">Spending by category</h1>
+  {% for stat in category_stats %}
+  <div class="cat-row">
+    <div class="cat-head">
+      <span class="name">{{ stat.category }}</span>
+      <span class="meta">{{ '%.2f' | format(stat.total) }} · {{ '%.0f' | format(stat.percent) }}% · {{ stat.count }} txn</span>
+    </div>
+    <div class="cat-bar"><span style="width: {{ stat.percent }}%"></span></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card-panel">
+  <h1 class="page-title">Add Transaction</h1>
+  <form method="POST">
+    <div class="form-group">
+      <label for="amount">Amount</label>
+      <input type="number" step="0.01" min="0" name="amount" id="amount" class="form-control" placeholder="0.00" />
+    </div>
+    <div class="form-group">
+      <label for="category">Category</label>
+      <select name="category" id="category" class="form-control">
+        {% for c in categories %}
+        <option value="{{ c }}" {% if c == 'Other' %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Type</label><br>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" name="type" id="incomeCheckbox" value="income">
+        <label class="form-check-label" for="incomeCheckbox">Income</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" name="type" id="expenseCheckbox" value="expense">
+        <label class="form-check-label" for="expenseCheckbox">Expense</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="comment">Comment</label>
+      <textarea name="comment" id="comment" class="form-control" placeholder="What was it for?"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Transaction</button>
+  </form>
+</div>
 {% endblock %}
 
 {% block javascript %}
