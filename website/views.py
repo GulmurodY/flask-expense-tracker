@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, flash, jsonify, send_file
+from flask import Blueprint, render_template, request, flash, jsonify, send_file, redirect
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from collections import defaultdict
-from datetime import datetime, time
+from datetime import datetime, time, date
 from .models import Note, CATEGORIES
 from . import db
 import json, uuid
@@ -34,11 +34,18 @@ views = Blueprint('views', __name__)
 @views.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
+    today = date.today()
+    current_date = request.form.get('date') if request.method == 'POST' else today.strftime('%Y-%m-%d')
+    if not current_date:
+        current_date = today.strftime('%Y-%m-%d')
+
     if request.method == 'POST':
         try:
             amount = float(request.form.get('amount'))
         except (TypeError, ValueError):
             amount = None
+
+        transaction_date = _parse_date(request.form.get('date'))
 
         income_checkbox = request.form.get('type') == 'income'  
         expense_checkbox = request.form.get('type') == 'expense'  
@@ -51,6 +58,10 @@ def home():
             flash('Please enter a valid number for the amount!', category='error')
         elif amount < 0:
             flash('Amount cannot be negative!', category='error')
+        elif request.form.get('date') and transaction_date is None:
+            flash('Please enter a valid transaction date!', category='error')
+        elif transaction_date and transaction_date > today:
+            flash('Transaction date cannot be in the future!', category='error')
         elif not (income_checkbox or expense_checkbox):
             flash('Please select at least one type (Income or Expense)!', category='error')
         else:
@@ -59,8 +70,11 @@ def home():
             else:
                 type = 'expense'
 
+            stored_date = transaction_date or today
+
             new_note = Note(user_id=current_user.id, amount=amount, type=type,
-                            comment=comment, category=category)
+                            comment=comment, category=category,
+                            date=datetime.combine(stored_date, time.min))
             db.session.add(new_note)
             db.session.commit()
             flash('Note added!', category='success')
@@ -90,6 +104,8 @@ def home():
                            category_stats=category_stats,
                            income_total=income_total,
                            expense_total=expense_total,
+                           current_date=current_date,
+                           today_date=today.strftime('%Y-%m-%d'),
                            start=request.args.get('start', ''),
                            end=request.args.get('end', ''))
 
@@ -154,6 +170,19 @@ def dashboard():
 @views.route('/export')
 @login_required
 def export():
+    today = date.today()
+    start_raw = request.args.get('start')
+    end_raw = request.args.get('end')
+    start = _parse_date(start_raw)
+    end = _parse_date(end_raw)
+
+    if (start_raw and start is None) or (end_raw and end is None):
+        flash('Please enter valid export dates!', category='error')
+        return redirect('/')
+    if (start and start > today) or (end and end > today):
+        flash('Export dates cannot be in the future!', category='error')
+        return redirect('/')
+
     notes = _filtered_notes()
 
     columns = ['date', 'type', 'category', 'amount', 'currency', 'comment']
