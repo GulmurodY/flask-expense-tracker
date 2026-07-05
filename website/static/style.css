@@ -234,6 +234,30 @@ body {
   padding: 2rem 0;
 }
 
+/* ---------- Panel header with actions ---------- */
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.panel-head .page-title {
+  margin-bottom: 1.25rem;
+}
+.export-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.export-form input[type="text"] {
+  width: 160px;
+}
+.export-form select {
+  width: 90px;
+}
+
 /* ---------- Category breakdown ---------- */
 .cat-row {
   margin-bottom: 1rem;

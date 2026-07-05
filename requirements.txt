@@ -2,3 +2,5 @@ flask
 Flask-SQLAlchemy
 flask-login
 python-dotenv
+pandas
+openpyxl

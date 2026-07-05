@@ -33,7 +33,19 @@
 </div>
 
 <div class="card-panel">
-  <h1 class="page-title">Transactions</h1>
+  <div class="panel-head">
+    <h1 class="page-title">Transactions</h1>
+    <form method="GET" action="/export" class="export-form">
+      <input type="text" name="filename" class="form-control" placeholder="file name" />
+      <select name="format" class="form-control">
+        <option value="csv">.csv</option>
+        <option value="xlsx" selected>.xlsx</option>
+      </select>
+      <input type="hidden" name="start" value="{{ start }}" />
+      <input type="hidden" name="end" value="{{ end }}" />
+      <button type="submit" class="btn btn-primary">Export</button>
+    </form>
+  </div>
   <table class="table">
     <thead>
       <tr>

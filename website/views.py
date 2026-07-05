@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, jsonify
+from flask import Blueprint, render_template, request, flash, jsonify, send_file
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from collections import defaultdict
@@ -6,6 +6,9 @@ from datetime import datetime, time
 from .models import Note, CATEGORIES
 from . import db
 import json, uuid
+import io
+import re
+import pandas as pd
 
 
 def _parse_date(value):
@@ -14,9 +17,19 @@ def _parse_date(value):
     except (TypeError, ValueError):
         return None
 
+
+def _filtered_notes():
+    start = _parse_date(request.args.get('start'))
+    end = _parse_date(request.args.get('end'))
+    query = Note.query.filter_by(user_id=current_user.id)
+    if start:
+        query = query.filter(Note.date >= datetime.combine(start, time.min))
+    if end:
+        query = query.filter(Note.date <= datetime.combine(end, time.max))
+    return query.order_by(Note.id).all()
+
 views = Blueprint('views', __name__)
 
-from flask import request
 
 @views.route('/', methods=['GET', 'POST'])
 @login_required
@@ -52,15 +65,7 @@ def home():
             db.session.commit()
             flash('Note added!', category='success')
 
-    start = _parse_date(request.args.get('start'))
-    end = _parse_date(request.args.get('end'))
-
-    query = Note.query.filter_by(user_id=current_user.id)
-    if start:
-        query = query.filter(Note.date >= datetime.combine(start, time.min))
-    if end:
-        query = query.filter(Note.date <= datetime.combine(end, time.max))
-    notes = query.order_by(Note.id).all()
+    notes = _filtered_notes()
 
     income_total = sum(n.amount for n in notes if n.type == 'income')
     expense_total = sum(n.amount for n in notes if n.type == 'expense')
@@ -144,6 +149,40 @@ def dashboard():
 
     return render_template("dashboard.html", user=current_user,
                            chart_data=chart_data, stats=stats)
+
+
+@views.route('/export')
+@login_required
+def export():
+    notes = _filtered_notes()
+
+    columns = ['date', 'type', 'category', 'amount', 'currency', 'comment']
+    df = pd.DataFrame([{
+        'date': n.date.strftime('%Y-%m-%d') if n.date else '',
+        'type': n.type,
+        'category': n.category or 'Other',
+        'amount': n.amount,
+        'currency': current_user.currency or 'USD',
+        'comment': n.comment or '',
+    } for n in notes], columns=columns)
+
+    raw = (request.args.get('filename') or '').strip()
+    name = re.sub(r'[^A-Za-z0-9._-]+', '_', raw).strip('._')
+    name = re.sub(r'\.(csv|xlsx)$', '', name, flags=re.IGNORECASE).strip('._') or 'transactions'
+
+    buf = io.BytesIO()
+    if request.args.get('format') == 'xlsx':
+        df.to_excel(buf, index=False, sheet_name='Transactions')
+        mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        download_name = f'{name}.xlsx'
+    else:
+        buf.write(df.to_csv(index=False).encode('utf-8'))
+        mimetype = 'text/csv'
+        download_name = f'{name}.csv'
+    buf.seek(0)
+
+    return send_file(buf, as_attachment=True,
+                     download_name=download_name, mimetype=mimetype)
 
 
 @views.route('/delete-note', methods=['POST'])
