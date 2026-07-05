@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from .models import User
+from .models import User, CURRENCIES
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import db   ##means from __init__.py import db
+from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 
 
@@ -39,6 +39,7 @@ def logout():
 def sign_up():
     email = ''
     first_name = ''
+    currency = 'USD'
     error_field = None
 
     if request.method == 'POST':
@@ -46,6 +47,9 @@ def sign_up():
         first_name = request.form.get('firstName')
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
+        currency = request.form.get('currency')
+        if currency not in CURRENCIES:
+            currency = 'USD'
 
         user = User.query.filter_by(email=email).first()
         if user:
@@ -64,8 +68,8 @@ def sign_up():
             flash('Password must be at least 7 characters.', category='error')
             error_field = 'password'
         else:
-            new_user = User(email=email, first_name=first_name, password=generate_password_hash(
-                password1))
+            new_user = User(email=email, first_name=first_name, currency=currency,
+                            password=generate_password_hash(password1))
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user, remember=True)
@@ -74,4 +78,5 @@ def sign_up():
 
     return render_template("sign_up.html", user=current_user,
                            email=email, first_name=first_name,
+                           currency=currency, currencies=CURRENCIES,
                            error_field=error_field)

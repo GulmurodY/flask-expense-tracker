@@ -27,6 +27,16 @@
         />
       </div>
       <div class="form-group">
+        <label for="currency">Currency</label>
+        <select name="currency" id="currency" class="form-control">
+          {% for code, symbol in currencies.items() %}
+          <option value="{{ code }}" {% if code == currency %}selected{% endif %}>
+            {{ code }} ({{ symbol.strip() }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
         <label for="password1">Password</label>
         <input
           type="password"

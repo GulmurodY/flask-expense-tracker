@@ -36,6 +36,14 @@ def create_app():
         version = int(os.path.getmtime(css)) if os.path.exists(css) else 0
         return {'static_version': version}
 
+    @app.context_processor
+    def inject_currency():
+        from flask_login import current_user
+        from .models import CURRENCIES
+        code = getattr(current_user, 'currency', None) or 'USD'
+        return {'currency_code': code,
+                'currency_symbol': CURRENCIES.get(code, '$')}
+
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
@@ -48,16 +56,17 @@ def create_app():
 
 
 def _run_lightweight_migrations():
-    """Add newly-introduced columns to existing SQLite tables in place.
-
-    db.create_all() only creates missing tables, not missing columns, so
-    older databases won't have columns added after they were first created.
-    """
     inspector = inspect(db.engine)
-    existing = {col['name'] for col in inspector.get_columns('note')}
-    if 'category' not in existing:
+    note_cols = {col['name'] for col in inspector.get_columns('note')}
+    if 'category' not in note_cols:
         db.session.execute(
             text("ALTER TABLE note ADD COLUMN category VARCHAR(150) DEFAULT 'Other'"))
+        db.session.commit()
+
+    user_cols = {col['name'] for col in inspector.get_columns('user')}
+    if 'currency' not in user_cols:
+        db.session.execute(
+            text("ALTER TABLE \"user\" ADD COLUMN currency VARCHAR(10) DEFAULT 'USD'"))
         db.session.commit()
 
 

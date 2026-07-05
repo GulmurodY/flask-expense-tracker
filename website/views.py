@@ -9,7 +9,6 @@ import json, uuid
 
 
 def _parse_date(value):
-    """Parse a 'YYYY-MM-DD' string from a date input; return None if invalid."""
     try:
         return datetime.strptime(value, '%Y-%m-%d').date()
     except (TypeError, ValueError):
@@ -28,8 +27,8 @@ def home():
         except (TypeError, ValueError):
             amount = None
 
-        income_checkbox = request.form.get('type') == 'income'  # Check if 'Income' checkbox is selected
-        expense_checkbox = request.form.get('type') == 'expense'  # Check if 'Expense' checkbox is selected
+        income_checkbox = request.form.get('type') == 'income'  
+        expense_checkbox = request.form.get('type') == 'expense'  
         comment = request.form.get('comment')
         category = request.form.get('category')
         if category not in CATEGORIES:
@@ -42,7 +41,6 @@ def home():
         elif not (income_checkbox or expense_checkbox):
             flash('Please select at least one type (Income or Expense)!', category='error')
         else:
-            # Determine the type based on the selected checkboxes
             if income_checkbox:
                 type = 'income'
             else:
@@ -54,7 +52,6 @@ def home():
             db.session.commit()
             flash('Note added!', category='success')
 
-    # Optional date-range filter from the query string.
     start = _parse_date(request.args.get('start'))
     end = _parse_date(request.args.get('end'))
 
@@ -65,7 +62,6 @@ def home():
         query = query.filter(Note.date <= datetime.combine(end, time.max))
     notes = query.order_by(Note.id).all()
 
-    # Summary + spending-by-category, computed over the filtered notes.
     income_total = sum(n.amount for n in notes if n.type == 'income')
     expense_total = sum(n.amount for n in notes if n.type == 'expense')
 
@@ -98,9 +94,7 @@ def home():
 def dashboard():
     notes = Note.query.filter_by(user_id=current_user.id).all()
 
-    # Expenses grouped by category (for the pie/doughnut chart).
     by_category = defaultdict(float)
-    # Income vs expense grouped by month (for line/bar charts).
     monthly_income = defaultdict(float)
     monthly_expense = defaultdict(float)
     income_total = 0.0
@@ -116,17 +110,14 @@ def dashboard():
             monthly_expense[month] += n.amount
             expense_total += n.amount
 
-    # Category data sorted by spend, highest first.
     cat_sorted = sorted(by_category.items(), key=lambda kv: kv[1], reverse=True)
     category_labels = [c for c, _ in cat_sorted]
     category_values = [round(v, 2) for _, v in cat_sorted]
 
-    # Aligned monthly series across all months that appear.
     months = sorted(set(list(monthly_income) + list(monthly_expense)))
     income_series = [round(monthly_income[m], 2) for m in months]
     expense_series = [round(monthly_expense[m], 2) for m in months]
 
-    # Reflection metrics.
     balance = income_total - expense_total
     savings_rate = (balance / income_total * 100) if income_total else 0
     top_category = category_labels[0] if category_labels else '—'
@@ -158,7 +149,7 @@ def dashboard():
 @views.route('/delete-note', methods=['POST'])
 @login_required
 def delete_note():
-    note = json.loads(request.data) # this function expects a JSON from the INDEX.js file 
+    note = json.loads(request.data)
     noteId = note['noteId']
     note = Note.query.get(noteId)
     if note:
