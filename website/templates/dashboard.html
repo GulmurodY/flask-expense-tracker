@@ -45,6 +45,21 @@
   </div>
 </div>
 
+{% if category_stats %}
+<div class="card-panel">
+  <h1 class="page-title">Spending by category</h1>
+  {% for stat in category_stats %}
+  <div class="cat-row">
+    <div class="cat-head">
+      <span class="name">{{ stat.category }}</span>
+      <span class="meta">{{ currency_symbol }}{{ '%.2f' | format(stat.total) }} &middot; {{ '%.0f' | format(stat.percent) }}% &middot; {{ stat.count }} txn</span>
+    </div>
+    <div class="cat-bar"><span style="width: {{ stat.percent }}%"></span></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% endif %}
 {% endblock %}
 

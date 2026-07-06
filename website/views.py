@@ -18,7 +18,7 @@ def _parse_date(value):
         return None
 
 
-def _filtered_notes():
+def _filtered_query():
     start = _parse_date(request.args.get('start'))
     end = _parse_date(request.args.get('end'))
     query = Note.query.filter_by(user_id=current_user.id)
@@ -26,7 +26,11 @@ def _filtered_notes():
         query = query.filter(Note.date >= datetime.combine(start, time.min))
     if end:
         query = query.filter(Note.date <= datetime.combine(end, time.max))
-    return query.order_by(Note.id).all()
+    return query
+
+
+def _filtered_notes():
+    return _filtered_query().order_by(Note.id).all()
 
 views = Blueprint('views', __name__)
 
@@ -79,29 +83,24 @@ def home():
             db.session.commit()
             flash('Note added!', category='success')
 
-    notes = _filtered_notes()
+    all_notes = _filtered_notes()
 
-    income_total = sum(n.amount for n in notes if n.type == 'income')
-    expense_total = sum(n.amount for n in notes if n.type == 'expense')
+    income_total = sum(n.amount for n in all_notes if n.type == 'income')
+    expense_total = sum(n.amount for n in all_notes if n.type == 'expense')
 
-    by_category = defaultdict(lambda: {'total': 0.0, 'count': 0})
-    for n in notes:
-        if n.type == 'expense':
-            key = n.category or 'Other'
-            by_category[key]['total'] += n.amount
-            by_category[key]['count'] += 1
-
-    category_stats = sorted(({
-        'category': cat,
-        'total': v['total'],
-        'count': v['count'],
-        'percent': (v['total'] / expense_total * 100) if expense_total else 0,
-    } for cat, v in by_category.items()), key=lambda s: s['total'], reverse=True)
+    page = request.args.get('page', 1, type=int)
+    pagination = _filtered_query().order_by(Note.id.desc()) \
+        .paginate(page=page, per_page=10, error_out=False)
 
     return render_template("home.html", user=current_user,
-                           notes=notes,
+                           notes=pagination.items,
+                           page=pagination.page,
+                           pages=pagination.pages,
+                           has_prev=pagination.has_prev,
+                           has_next=pagination.has_next,
+                           offset=(pagination.page - 1) * pagination.per_page,
+                           total=pagination.total,
                            categories=CATEGORIES,
-                           category_stats=category_stats,
                            income_total=income_total,
                            expense_total=expense_total,
                            current_date=current_date,
@@ -116,6 +115,7 @@ def dashboard():
     notes = Note.query.filter_by(user_id=current_user.id).all()
 
     by_category = defaultdict(float)
+    category_counts = defaultdict(int)
     monthly_income = defaultdict(float)
     monthly_expense = defaultdict(float)
     income_total = 0.0
@@ -127,13 +127,22 @@ def dashboard():
             monthly_income[month] += n.amount
             income_total += n.amount
         else:
-            by_category[n.category or 'Other'] += n.amount
+            key = n.category or 'Other'
+            by_category[key] += n.amount
+            category_counts[key] += 1
             monthly_expense[month] += n.amount
             expense_total += n.amount
 
     cat_sorted = sorted(by_category.items(), key=lambda kv: kv[1], reverse=True)
     category_labels = [c for c, _ in cat_sorted]
     category_values = [round(v, 2) for _, v in cat_sorted]
+
+    category_stats = [{
+        'category': cat,
+        'total': total,
+        'count': category_counts[cat],
+        'percent': (total / expense_total * 100) if expense_total else 0,
+    } for cat, total in cat_sorted]
 
     months = sorted(set(list(monthly_income) + list(monthly_expense)))
     income_series = [round(monthly_income[m], 2) for m in months]
@@ -164,7 +173,8 @@ def dashboard():
     }
 
     return render_template("dashboard.html", user=current_user,
-                           chart_data=chart_data, stats=stats)
+                           chart_data=chart_data, stats=stats,
+                           category_stats=category_stats)
 
 
 @views.route('/export')
