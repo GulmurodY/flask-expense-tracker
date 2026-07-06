@@ -51,8 +51,9 @@ def home():
 
         transaction_date = _parse_date(request.form.get('date'))
 
-        income_checkbox = request.form.get('type') == 'income'  
-        expense_checkbox = request.form.get('type') == 'expense'  
+        types = request.form.getlist('type')
+        income_checkbox = types == ['income']
+        expense_checkbox = types == ['expense']
         comment = request.form.get('comment')
         category = request.form.get('category')
         if category not in CATEGORIES:
@@ -67,7 +68,7 @@ def home():
         elif transaction_date and transaction_date > today:
             flash('Transaction date cannot be in the future!', category='error')
         elif not (income_checkbox or expense_checkbox):
-            flash('Please select at least one type (Income or Expense)!', category='error')
+            flash('Please select exactly one type (Income or Expense)!', category='error')
         else:
             if income_checkbox:
                 type = 'income'
