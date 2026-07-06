@@ -11,6 +11,41 @@
   --expense: #ef4444;
   --expense-bg: #fef2f2;
   --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.05);
+  --hover: #eef2ff;
+  --subtle: #eef2f7;
+  --subtle-2: #e2e8f0;
+  --row-border: #f1f5f9;
+  --row-hover: #f8fafc;
+  --input-bg: #ffffff;
+  --danger-hover: #fee2e2;
+  --alert-danger-text: #b91c1c;
+  --alert-success-text: #047857;
+  --overlay: rgba(15, 23, 42, 0.45);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --border: #334155;
+  --accent: #818cf8;
+  --accent-2: #a78bfa;
+  --income: #34d399;
+  --income-bg: rgba(52, 211, 153, 0.12);
+  --expense: #f87171;
+  --expense-bg: rgba(248, 113, 113, 0.12);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --hover: rgba(129, 140, 248, 0.12);
+  --subtle: #334155;
+  --subtle-2: #475569;
+  --row-border: #283850;
+  --row-hover: #223145;
+  --input-bg: #0f172a;
+  --danger-hover: rgba(248, 113, 113, 0.22);
+  --alert-danger-text: #fca5a5;
+  --alert-success-text: #6ee7b7;
+  --overlay: rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -60,7 +95,25 @@ body {
 
 .navbar .nav-item.nav-link:hover {
   color: var(--accent) !important;
-  background: #eef2ff;
+  background: var(--hover);
+}
+
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0.45rem 0.6rem;
+  margin-left: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.theme-toggle:hover {
+  color: var(--accent);
+  background: var(--hover);
+  border-color: var(--accent);
 }
 
 .navbar .profile-chip {
@@ -124,11 +177,11 @@ body {
   min-width: 160px;
 }
 .btn-clear {
-  background: #eef2f7;
+  background: var(--subtle);
   color: var(--muted);
 }
 .btn-clear:hover {
-  background: #e2e8f0;
+  background: var(--subtle-2);
   color: var(--text);
 }
 
@@ -193,13 +246,13 @@ body {
 
 .table tbody td {
   border: none;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--row-border);
   padding: 0.85rem 1rem;
   vertical-align: middle;
 }
 
 .table tbody tr:hover {
-  background: #f8fafc;
+  background: var(--row-hover);
 }
 
 .amount-income {
@@ -285,7 +338,7 @@ body {
 }
 .menu-toggle:hover {
   color: var(--accent);
-  background: #eef2ff;
+  background: var(--hover);
   border-color: var(--accent);
 }
 .menu-dropdown {
@@ -314,7 +367,7 @@ body {
   text-decoration: none;
 }
 .menu-dropdown .menu-item:hover {
-  background: #eef2ff;
+  background: var(--hover);
   color: var(--accent);
 }
 
@@ -353,7 +406,7 @@ body {
 .dropzone:hover,
 .dropzone.dragging {
   border-color: var(--accent);
-  background: #eef2ff;
+  background: var(--hover);
 }
 .dropzone.has-file {
   border-style: solid;
@@ -378,7 +431,7 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--overlay);
   align-items: flex-start;
   justify-content: center;
   padding: 3rem 1rem;
@@ -430,7 +483,7 @@ body {
 }
 .cat-bar {
   height: 8px;
-  background: #eef2f7;
+  background: var(--subtle);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -463,11 +516,23 @@ label {
 .form-control {
   height: auto;
   line-height: 1.5;
+  background: var(--input-bg);
+  color: var(--text);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.6rem 0.85rem;
   font-size: 0.95rem;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus {
+  background: var(--input-bg);
+  color: var(--text);
+}
+
+.form-control::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
 }
 
 .form-control:focus {
@@ -514,7 +579,7 @@ textarea.form-control {
   font-size: 0.85rem;
 }
 .btn-danger:hover {
-  background: #fee2e2;
+  background: var(--danger-hover);
   color: var(--expense);
 }
 
@@ -529,11 +594,14 @@ textarea.form-control {
 }
 .alert-danger {
   background: var(--expense-bg);
-  color: #b91c1c;
+  color: var(--alert-danger-text);
 }
 .alert-success {
   background: var(--income-bg);
-  color: #047857;
+  color: var(--alert-success-text);
+}
+.alert .close {
+  color: var(--text);
 }
 
 /* ---------- Auth pages ---------- */

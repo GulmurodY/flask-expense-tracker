@@ -74,11 +74,20 @@
   const expense = '#ef4444';
 
   Chart.defaults.font.family = "Inter, sans-serif";
-  Chart.defaults.color = '#64748b';
+
+  const charts = [];
+  function applyChartTheme() {
+    const css = getComputedStyle(document.documentElement);
+    Chart.defaults.color = css.getPropertyValue('--muted').trim();
+    Chart.defaults.borderColor = css.getPropertyValue('--border').trim();
+    charts.forEach((c) => c.update());
+  }
+  applyChartTheme();
+  window.addEventListener('themechange', applyChartTheme);
 
   const catEl = document.getElementById('categoryChart');
   if (catEl && data.category_labels.length) {
-    new Chart(catEl, {
+    charts.push(new Chart(catEl, {
       type: 'doughnut',
       data: {
         labels: data.category_labels,
@@ -91,14 +100,14 @@
           tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${money(ctx.parsed)}` } }
         }
       }
-    });
+    }));
   }
 
   const totalsEl = document.getElementById('totalsChart');
   if (totalsEl) {
     const inc = data.income_series.reduce((a, b) => a + b, 0);
     const exp = data.expense_series.reduce((a, b) => a + b, 0);
-    new Chart(totalsEl, {
+    charts.push(new Chart(totalsEl, {
       type: 'bar',
       data: {
         labels: ['Income', 'Expense'],
@@ -111,12 +120,12 @@
         },
         scales: { y: { beginAtZero: true, ticks: { callback: (v) => symbol + v } } }
       }
-    });
+    }));
   }
 
   const trendEl = document.getElementById('trendChart');
   if (trendEl && data.months.length) {
-    new Chart(trendEl, {
+    charts.push(new Chart(trendEl, {
       type: 'line',
       data: {
         labels: data.months,
@@ -134,7 +143,7 @@
         },
         scales: { y: { beginAtZero: true, ticks: { callback: (v) => symbol + v } } }
       }
-    });
+    }));
   }
 </script>
 {% endblock %}

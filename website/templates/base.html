@@ -3,6 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      if (localStorage.getItem("theme") === "dark") {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    </script>
     <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
@@ -50,6 +55,9 @@
           <a class="nav-item nav-link" id="login" href="/login">Login</a>
           <a class="nav-item nav-link" id="signUp" href="/sign-up">Sign Up</a>
           {% endif %}
+          <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+            <i class="fa fa-moon-o"></i>
+          </button>
         </div>
       </div>
     </nav>
@@ -88,6 +96,30 @@
       integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
       crossorigin="anonymous"
     ></script>
+
+    <script type="text/javascript">
+      (function () {
+        const toggle = document.getElementById("themeToggle");
+        const icon = toggle.querySelector("i");
+        const setIcon = () => {
+          const dark = document.documentElement.getAttribute("data-theme") === "dark";
+          icon.className = dark ? "fa fa-sun-o" : "fa fa-moon-o";
+        };
+        setIcon();
+        toggle.addEventListener("click", () => {
+          const dark = document.documentElement.getAttribute("data-theme") === "dark";
+          if (dark) {
+            document.documentElement.removeAttribute("data-theme");
+            localStorage.setItem("theme", "light");
+          } else {
+            document.documentElement.setAttribute("data-theme", "dark");
+            localStorage.setItem("theme", "dark");
+          }
+          setIcon();
+          window.dispatchEvent(new Event("themechange"));
+        });
+      })();
+    </script>
 
 {% block javascript %}
     <script type="text/javascript">
