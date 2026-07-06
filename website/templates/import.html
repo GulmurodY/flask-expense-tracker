@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Import{% endblock %}
+{% block content %}
+
+<div class="dialog-page">
+  <div class="card-panel dialog-card">
+    <h1 class="page-title">Import transactions</h1>
+    <p class="dialog-hint">
+      Upload a <strong>.csv</strong> or <strong>.xlsx</strong> file with columns
+      <code>date, type, category, amount, currency, comment</code> —
+      only <code>amount</code> and <code>type</code> are required.
+      Files exported from this app import as-is.
+    </p>
+    <form method="POST" action="/import" enctype="multipart/form-data">
+      <div class="dropzone" id="dropzone">
+        <input type="file" name="file" id="fileInput" accept=".csv,.xlsx" hidden />
+        <div class="dz-icon">&#128196;</div>
+        <div class="dz-text" id="dzText">
+          Drag &amp; drop your file here<br />
+          <span class="dz-sub">or click to browse</span>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <a href="/" class="btn btn-clear">Cancel</a>
+        <button type="submit" class="btn btn-primary" id="importBtn" disabled>Import</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("fileInput");
+  const dzText = document.getElementById("dzText");
+  const importBtn = document.getElementById("importBtn");
+
+  function showFile(files) {
+    if (!files.length) return;
+    fileInput.files = files;
+    dzText.textContent = files[0].name;
+    dropzone.classList.add("has-file");
+    importBtn.disabled = false;
+  }
+
+  dropzone.addEventListener("click", (e) => {
+    if (e.target !== fileInput) fileInput.click();
+  });
+  fileInput.addEventListener("change", () => showFile(fileInput.files));
+
+  ["dragenter", "dragover"].forEach((ev) =>
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault();
+      dropzone.classList.add("dragging");
+    })
+  );
+  ["dragleave", "drop"].forEach((ev) =>
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("dragging");
+    })
+  );
+  dropzone.addEventListener("drop", (e) => showFile(e.dataTransfer.files));
+</script>
+{% endblock %}

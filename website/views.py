@@ -176,6 +176,13 @@ def export():
     start = _parse_date(start_raw)
     end = _parse_date(end_raw)
 
+    default_name = f'transactions_{today.strftime("%Y-%m-%d")}'
+
+    if 'format' not in request.args:
+        return render_template("export.html", user=current_user,
+                               start=start_raw or '', end=end_raw or '',
+                               default_name=default_name)
+
     if (start_raw and start is None) or (end_raw and end is None):
         flash('Please enter valid export dates!', category='error')
         return redirect('/')
@@ -197,7 +204,7 @@ def export():
 
     raw = (request.args.get('filename') or '').strip()
     name = re.sub(r'[^A-Za-z0-9._-]+', '_', raw).strip('._')
-    name = re.sub(r'\.(csv|xlsx)$', '', name, flags=re.IGNORECASE).strip('._') or 'transactions'
+    name = re.sub(r'\.(csv|xlsx)$', '', name, flags=re.IGNORECASE).strip('._') or default_name
 
     buf = io.BytesIO()
     if request.args.get('format') == 'xlsx':
@@ -212,6 +219,102 @@ def export():
 
     return send_file(buf, as_attachment=True,
                      download_name=download_name, mimetype=mimetype)
+
+
+@views.route('/import', methods=['GET', 'POST'])
+@login_required
+def import_transactions():
+    if request.method == 'GET':
+        return render_template("import.html", user=current_user)
+
+    file = request.files.get('file')
+    if file is None or not file.filename:
+        flash('Please choose a file to import!', category='error')
+        return redirect('/')
+
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    try:
+        if ext == 'xlsx':
+            df = pd.read_excel(file)
+        elif ext == 'csv':
+            df = pd.read_csv(file)
+        else:
+            flash('Unsupported file type — please upload a .csv or .xlsx file!', category='error')
+            return redirect('/')
+    except Exception:
+        flash('Could not read the file — make sure it is a valid CSV or Excel file!', category='error')
+        return redirect('/')
+
+    df.columns = [str(c).strip().lower() for c in df.columns]
+    missing = [c for c in ('amount', 'type') if c not in df.columns]
+    if missing:
+        flash(f'Missing required column(s): {", ".join(missing)}!', category='error')
+        return redirect('/')
+
+    today = date.today()
+    category_lookup = {c.lower(): c for c in CATEGORIES}
+    imported = 0
+    errors = []
+
+    for i, row in df.iterrows():
+        rownum = i + 2  # +1 for the header row, +1 for 1-based numbering
+
+        try:
+            amount = float(row['amount'])
+        except (TypeError, ValueError):
+            amount = None
+        if amount is None or pd.isna(amount):
+            errors.append(f'row {rownum}: invalid amount')
+            continue
+        if amount < 0:
+            errors.append(f'row {rownum}: negative amount')
+            continue
+
+        type = str(row['type']).strip().lower()
+        if type not in ('income', 'expense'):
+            errors.append(f'row {rownum}: type must be income or expense')
+            continue
+
+        raw_date = row.get('date')
+        if raw_date is None or pd.isna(raw_date) or str(raw_date).strip() == '':
+            transaction_date = today
+        elif isinstance(raw_date, datetime):
+            transaction_date = raw_date.date()
+        else:
+            transaction_date = _parse_date(str(raw_date).strip())
+        if transaction_date is None:
+            errors.append(f'row {rownum}: invalid date (use YYYY-MM-DD)')
+            continue
+        if transaction_date > today:
+            errors.append(f'row {rownum}: date is in the future')
+            continue
+
+        raw_category = row.get('category')
+        if raw_category is None or pd.isna(raw_category):
+            category = 'Other'
+        else:
+            category = category_lookup.get(str(raw_category).strip().lower(), 'Other')
+
+        raw_comment = row.get('comment')
+        comment = '' if raw_comment is None or pd.isna(raw_comment) else str(raw_comment)
+
+        new_note = Note(user_id=current_user.id, amount=amount, type=type,
+                        comment=comment, category=category,
+                        date=datetime.combine(transaction_date, time.min))
+        db.session.add(new_note)
+        imported += 1
+
+    if imported:
+        db.session.commit()
+        flash(f'Imported {imported} transaction(s)!', category='success')
+    if errors:
+        shown = '; '.join(errors[:3])
+        more = f' (+{len(errors) - 3} more)' if len(errors) > 3 else ''
+        flash(f'Skipped {len(errors)} row(s): {shown}{more}', category='error')
+    if not imported and not errors:
+        flash('The file has no rows to import!', category='error')
+
+    return redirect('/')
 
 
 @views.route('/delete-note', methods=['POST'])

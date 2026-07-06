@@ -35,16 +35,13 @@
 <div class="card-panel">
   <div class="panel-head">
     <h1 class="page-title">Transactions</h1>
-    <form method="GET" action="/export" class="export-form">
-      <input type="text" name="filename" class="form-control" placeholder="file name" />
-      <select name="format" class="form-control">
-        <option value="csv">.csv</option>
-        <option value="xlsx" selected>.xlsx</option>
-      </select>
-      <input type="hidden" name="start" value="{{ start }}" />
-      <input type="hidden" name="end" value="{{ end }}" />
-      <button type="submit" class="btn btn-primary">Export</button>
-    </form>
+    <div class="menu-wrap">
+      <button type="button" class="menu-toggle" id="panelMenuBtn" aria-label="More actions" aria-haspopup="true" aria-expanded="false">&#8943;</button>
+      <div class="menu-dropdown" id="panelMenu">
+        <a class="menu-item" href="/import">Import&hellip;</a>
+        <a class="menu-item" href="/export{% if start or end %}?start={{ start }}&amp;end={{ end }}{% endif %}">Export&hellip;</a>
+      </div>
+    </div>
   </div>
   <table class="table">
     <thead>
@@ -150,5 +147,17 @@
       window.location.href = "/";
     });
   }
+
+  const menuBtn = document.getElementById("panelMenuBtn");
+  const menu = document.getElementById("panelMenu");
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = menu.classList.toggle("open");
+    menuBtn.setAttribute("aria-expanded", open);
+  });
+  document.addEventListener("click", () => {
+    menu.classList.remove("open");
+    menuBtn.setAttribute("aria-expanded", "false");
+  });
 </script>
 {% endblock %}

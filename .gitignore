@@ -21,3 +21,5 @@ instance/
 
 *.joblib
 *.pkl
+
+.claude

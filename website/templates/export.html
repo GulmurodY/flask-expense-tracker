@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Export{% endblock %}
+{% block content %}
+
+<div class="dialog-page">
+  <div class="card-panel dialog-card">
+    <h1 class="page-title">Export transactions</h1>
+    {% if start or end %}
+    <p class="dialog-hint">
+      Exporting transactions
+      {% if start %}from <strong>{{ start }}</strong>{% endif %}
+      {% if end %}to <strong>{{ end }}</strong>{% endif %} (your current filter).
+    </p>
+    {% else %}
+    <p class="dialog-hint">All of your transactions will be exported.</p>
+    {% endif %}
+    <form method="GET" action="/export">
+      <div class="form-group">
+        <label for="filename">File name</label>
+        <input type="text" name="filename" id="filename" class="form-control" placeholder="{{ default_name }}" />
+      </div>
+      <div class="form-group">
+        <label for="format">Format</label>
+        <select name="format" id="format" class="form-control">
+          <option value="xlsx" selected>Excel (.xlsx)</option>
+          <option value="csv">CSV (.csv)</option>
+        </select>
+      </div>
+      <input type="hidden" name="start" value="{{ start }}" />
+      <input type="hidden" name="end" value="{{ end }}" />
+      <div class="dialog-actions">
+        <a href="/" class="btn btn-clear">Cancel</a>
+        <button type="submit" class="btn btn-primary">Export</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

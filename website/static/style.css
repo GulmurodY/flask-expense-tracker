@@ -245,17 +245,109 @@ body {
 .panel-head .page-title {
   margin-bottom: 1.25rem;
 }
-.export-form {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.menu-wrap {
+  position: relative;
   margin-bottom: 1.25rem;
 }
-.export-form input[type="text"] {
-  width: 160px;
+.menu-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
-.export-form select {
-  width: 90px;
+.menu-toggle:hover {
+  color: var(--accent);
+  background: #eef2ff;
+  border-color: var(--accent);
+}
+.menu-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 160px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 0.4rem;
+  z-index: 20;
+}
+.menu-dropdown.open {
+  display: block;
+}
+.menu-dropdown .menu-item {
+  display: block;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  color: var(--text);
+  font-weight: 500;
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+.menu-dropdown .menu-item:hover {
+  background: #eef2ff;
+  color: var(--accent);
+}
+
+/* ---------- Import / export dialog pages ---------- */
+.dialog-page {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.5rem;
+}
+.dialog-card {
+  width: 100%;
+  max-width: 520px;
+}
+.dialog-hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+.dialog-hint code {
+  font-size: 0.85em;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.dropzone:hover,
+.dropzone.dragging {
+  border-color: var(--accent);
+  background: #eef2ff;
+}
+.dropzone.has-file {
+  border-style: solid;
+  border-color: var(--accent);
+}
+.dropzone .dz-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+.dropzone .dz-text {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.dropzone .dz-sub {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.85rem;
 }
 
 /* ---------- Category breakdown ---------- */
