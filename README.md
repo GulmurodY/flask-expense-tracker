@@ -1,73 +1,73 @@
 # Expense Tracker
 
-Expense Tracker is a web application built with Flask that allows users to easily track their expenses and income, helping them stay on top of their finances.
+A Flask web app for tracking personal income and expenses, with per-user accounts, categories, a dashboard of charts, CSV/Excel import and export, and a dark mode.
+
+![Demo](https://github.com/GulmurodY/flask-expense-tracker/blob/main/expense-tracker-demo.gif)
 
 ## Features
 
-- **User Authentication**: Sign-up, log-in, and log-out functionality.
-- **Expense & Income Tracking**: Add and view your income and expense records.
-- **Record Management**: Ability to delete any of your financial records.
-## Demonstration
-![Demo](https://github.com/GulmurodY/flask-expense-tracker/blob/main/expense-tracker-demo.gif)
-## Installation
+- **Accounts**: sign up, log in and log out. Each user picks a currency at sign-up (USD, EUR, GBP, SAR, AED, RUB, TJS, UZS, KZT, CNY, JPY, INR, TRY), and amounts are shown with that currency's symbol.
+- **Transactions**: add income or expense entries with an amount, category, comment and date. Future dates and negative amounts are rejected, and exactly one type must be chosen.
+- **Categories**: Food, Transport, Housing, Shopping, Bills, Entertainment, Health, Salary and Other.
+- **Transaction list**: paginated (10 per page), with income, expense and balance totals, a date-range filter, and a delete button on each row.
+- **Dashboard**: balance, savings rate, top category and average expense, plus charts (built with Chart.js) for expenses by category, income vs. expense, and the monthly trend. A per-category breakdown shows each category's total, share of spending and number of transactions.
+- **Import**: upload a `.csv` or `.xlsx` file with the columns `date, type, category, amount, currency, comment`. Only `amount` and `type` are required. Invalid rows are skipped and reported.
+- **Export**: download transactions as `.csv` or `.xlsx`, respecting the current date filter, with a custom file name. Exported files can be imported back as-is. [`sample-expenses.xlsx`](sample-expenses.xlsx) is an example file.
+- **Dark mode**: a toggle in the navigation bar. The choice is remembered in the browser.
 
-### Using Docker
+## Getting started
 
-1. **Pull the image**
-```
-docker pull gulmurody/expense-tracker:latest
-```
-2. **Run the image**
-```
-docker run -p 8000:8000 gulmurody/expense-tracker 
-```
+Requires Python 3.11 or newer.
 
-3. This will pull the latest image from Docker Hub and start the application at http://localhost:8000.
-### Local Installation
-
-1. **Clone the Repository**:
+1. Clone the repository:
 
     ```bash
-    git clone https://github.com/GulmurodY/expense-tracker.git
+    git clone https://github.com/GulmurodY/flask-expense-tracker.git
+    cd flask-expense-tracker
     ```
 
-2. **Navigate into the Project Directory**:
+2. Install the dependencies (ideally in a virtual or conda environment):
 
     ```bash
-    cd expense-tracker
-    ```
-
-3. **Install Dependencies**:
-
-    First, create and activate a virtual environment, then run the following command to install all required dependencies:
-
-    ```bash
-    pip install --upgrade pip
     pip install -r requirements.txt
     ```
 
-4. **Run the App**:
+3. Optionally, create a `.env` file with a secret key for signing sessions. Without it, the app uses a development default.
 
-    Start the application using:
+    ```
+    SECRET_KEY=your-random-secret
+    ```
+
+4. Run the app:
 
     ```bash
     python main.py
     ```
 
-5. **Access the Application**:
+    Then open [http://localhost:8001](http://localhost:8001). Set the `PORT` environment variable to use a different port.
 
-    Open your web browser and visit [http://localhost:8000](http://localhost:8000) to access the Expense Tracker.
+    On macOS/Linux, `./run.sh` activates the `expense_tracker` conda environment, starts the app, and frees the port when you stop it. `run.bat` does the same on Windows.
 
-## Usage
+The SQLite database is created automatically at `instance/database.db` on first run.
 
-- **Sign Up & Log In**: Create a new account or log in with your existing credentials.
-- **Home Page**: Once logged in, you will be redirected to the home page where you can see all your tracked records.
-- **Adding a Note**: To add a new note, enter the amount, select the type (income or expense), add a comment if desired, and click the **Add Note** button.
-- **Deleting a Note**: To delete a note, simply click the delete button next to the transaction you want to remove.
+## Project structure
 
-## Technologies Used
+```
+main.py              Entry point
+website/
+  __init__.py        App factory, database setup and lightweight schema migrations
+  auth.py            Sign-up, login and logout routes
+  views.py           Transactions, dashboard, import, export and delete routes
+  models.py          User and Note models, currencies and categories
+  templates/         Jinja templates
+  static/style.css   Styles, including the dark theme
+docker/, kubernetes/ An older container and Kubernetes setup that hasn't been
+                     updated for the current dependencies
+```
 
-- **Flask**: A lightweight Python web framework for backend development.
-- **Flask-SQLAlchemy**: Flask extension to work with SQLAlchemy for database interactions.
-- **Flask-Login**: Manages user sessions and authentication.
-- **HTML/CSS/JavaScript**: For the frontend, providing a clean and responsive user interface.
+## Built with
+
+- **Flask**, with **Flask-SQLAlchemy** (SQLite) and **Flask-Login**
+- **pandas** and **openpyxl** for import and export
+- **Chart.js** for the dashboard charts
+- **Bootstrap 4** and custom CSS for the interface
